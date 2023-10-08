@@ -1,48 +1,97 @@
 import { open } from "node:fs/promises";
 import { argv } from "node:process";
 
-const filePath = argv.at(2);
-const file = await open(filePath);
+const OpponentsChoice = {
+  Rock: "A",
+  Paper: "B",
+  Scissors: "C",
+};
+const MyChoice = {
+  Rock: "X",
+  Paper: "Y",
+  Scissors: "Z",
+};
+const OutcomeOfRound = {
+  Lose: "X",
+  Draw: "Y",
+  Win: "Z",
+};
 
-let totalScore = 0;
+/**
+ * @param {MyChoice[keyof typeof MyChoice]} shape
+ */
+function getScoreForShape(shape) {
+  switch (shape) {
+    case MyChoice.Rock:
+      return 1;
 
-for await (const line of file.readLines()) {
-  const [opponentsChoice, myChoice] = line.split(" ");
+    case MyChoice.Paper:
+      return 2;
 
-  // Get score for chosen shape
-  switch (myChoice) {
-    case "X":
-      totalScore += 1;
-      break;
-
-    case "Y":
-      totalScore += 2;
-      break;
-
-    case "Z":
-      totalScore += 3;
-      break;
+    case MyChoice.Scissors:
+      return 3;
 
     default:
-      throw new Error(`You have chosen an invalid shape: ${myChoice}`);
-      break;
-  }
-
-  // Determine outcome of the round
-  const iAmWinning =
-    (myChoice === "X" && opponentsChoice === "C") ||
-    (myChoice === "Y" && opponentsChoice === "A") ||
-    (myChoice === "Z" && opponentsChoice === "B");
-  const itIsDraw =
-    (myChoice === "X" && opponentsChoice === "A") ||
-    (myChoice === "Y" && opponentsChoice === "B") ||
-    (myChoice === "Z" && opponentsChoice === "C");
-
-  if (iAmWinning) {
-    totalScore += 6;
-  } else if (itIsDraw) {
-    totalScore += 3;
+      throw new Error(`You have chosen an invalid shape: ${shape}`);
   }
 }
 
-console.log(`Total score for the game is: ${totalScore}`);
+/**
+ * @param {MyChoice[keyof typeof MyChoice]} myChoice
+ * @param {OpponentsChoice[keyof typeof OpponentsChoice]} opponentsChoice
+ */
+function determineOutcomeOfRound(myChoice, opponentsChoice) {
+  const iAmWinning =
+    (myChoice === MyChoice.Rock &&
+      opponentsChoice === OpponentsChoice.Scissors) ||
+    (myChoice === MyChoice.Paper && opponentsChoice === OpponentsChoice.Rock) ||
+    (myChoice === MyChoice.Scissors &&
+      opponentsChoice === OpponentsChoice.Paper);
+
+  if (iAmWinning) {
+    return OutcomeOfRound.Win;
+  }
+
+  const itIsDraw =
+    (myChoice === MyChoice.Rock && opponentsChoice === OpponentsChoice.Rock) ||
+    (myChoice === MyChoice.Paper &&
+      opponentsChoice === OpponentsChoice.Paper) ||
+    (myChoice === MyChoice.Scissors &&
+      opponentsChoice === OpponentsChoice.Scissors);
+
+  if (itIsDraw) {
+    return OutcomeOfRound.Draw;
+  }
+
+  return OutcomeOfRound.Lose;
+}
+
+/**
+ * @param {import("node:fs/promises").FileHandle} strategyGuide
+ */
+async function calculateAssumedTotalScore(strategyGuide) {
+  let totalScore = 0;
+
+  for await (const line of strategyGuide.readLines()) {
+    const [opponentsChoice, myChoice] = line.split(" ");
+
+    totalScore += getScoreForShape(myChoice);
+
+    const outcomeOfRound = determineOutcomeOfRound(myChoice, opponentsChoice);
+
+    if (outcomeOfRound === OutcomeOfRound.Win) {
+      totalScore += 6;
+    } else if (outcomeOfRound === OutcomeOfRound.Draw) {
+      totalScore += 3;
+    }
+  }
+
+  return totalScore;
+}
+
+const filePath = argv.at(2);
+const file = await open(filePath);
+
+const assumedTotalScore = await calculateAssumedTotalScore(file);
+
+console.log(`Assumed total score for the game is: ${assumedTotalScore}`);
