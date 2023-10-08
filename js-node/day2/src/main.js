@@ -67,12 +67,54 @@ function determineOutcomeOfRound(myChoice, opponentsChoice) {
 }
 
 /**
- * @param {import("node:fs/promises").FileHandle} strategyGuide
+ * @param {OutcomeOfRound[keyof typeof OutcomeOfRound]} desiredOutcome
+ * @param {OpponentsChoice[keyof typeof OpponentsChoice]} opponentsChoice
  */
-async function calculateAssumedTotalScore(strategyGuide) {
+function determineChoiceForDesiredOutcome(desiredOutcome, opponentsChoice) {
+  if (desiredOutcome === OutcomeOfRound.Win) {
+    switch (opponentsChoice) {
+      case OpponentsChoice.Rock:
+        return MyChoice.Paper;
+
+      case OpponentsChoice.Paper:
+        return MyChoice.Scissors;
+
+      case OpponentsChoice.Scissors:
+        return MyChoice.Rock;
+    }
+  } else if (desiredOutcome === OutcomeOfRound.Draw) {
+    switch (opponentsChoice) {
+      case OpponentsChoice.Rock:
+        return MyChoice.Rock;
+
+      case OpponentsChoice.Paper:
+        return MyChoice.Paper;
+
+      case OpponentsChoice.Scissors:
+        return MyChoice.Scissors;
+    }
+  } else if (desiredOutcome === OutcomeOfRound.Lose) {
+    switch (opponentsChoice) {
+      case OpponentsChoice.Rock:
+        return MyChoice.Scissors;
+
+      case OpponentsChoice.Paper:
+        return MyChoice.Rock;
+
+      case OpponentsChoice.Scissors:
+        return MyChoice.Paper;
+    }
+  }
+}
+
+/**
+ * @param {string} filePath
+ */
+async function calculateAssumedTotalScore(filePath) {
+  const strategyGuide = await open(filePath);
   let totalScore = 0;
 
-  for await (const line of strategyGuide.readLines()) {
+  for await (const line of strategyGuide.readLines({ start: 0 })) {
     const [opponentsChoice, myChoice] = line.split(" ");
 
     totalScore += getScoreForShape(myChoice);
@@ -86,12 +128,43 @@ async function calculateAssumedTotalScore(strategyGuide) {
     }
   }
 
+  await strategyGuide.close();
+
+  return totalScore;
+}
+
+/**
+ * @param {string} filePath
+ */
+async function calculateActualTotalScore(filePath) {
+  const strategyGuide = await open(filePath);
+  let totalScore = 0;
+
+  for await (const line of strategyGuide.readLines({ start: 0 })) {
+    const [opponentsChoice, desiredOutcome] = line.split(" ");
+    const myChoice = determineChoiceForDesiredOutcome(
+      desiredOutcome,
+      opponentsChoice,
+    );
+
+    totalScore += getScoreForShape(myChoice);
+
+    if (desiredOutcome === OutcomeOfRound.Win) {
+      totalScore += 6;
+    } else if (desiredOutcome === OutcomeOfRound.Draw) {
+      totalScore += 3;
+    }
+  }
+
+  await strategyGuide.close();
+
   return totalScore;
 }
 
 const filePath = argv.at(2);
-const file = await open(filePath);
 
-const assumedTotalScore = await calculateAssumedTotalScore(file);
+const assumedTotalScore = await calculateAssumedTotalScore(filePath);
+const actualTotalScore = await calculateActualTotalScore(filePath);
 
 console.log(`Assumed total score for the game is: ${assumedTotalScore}`);
+console.log(`Actual total score for the game is: ${actualTotalScore}`);
