@@ -8,19 +8,11 @@ function findCommonItemInRucksack(rucksack) {
   const firstCompartment = rucksack.substring(0, rucksack.length / 2);
   const secondCompartment = rucksack.substring(rucksack.length / 2);
 
-  /** @type {string} */
-  let commonItem;
-
-  firstHalfLoop: for (const firstItem of firstCompartment) {
-    for (const secondItem of secondCompartment) {
-      if (firstItem === secondItem) {
-        commonItem = firstItem;
-        break firstHalfLoop;
-      }
+  for (const firstItem of firstCompartment) {
+    if (secondCompartment.includes(firstItem)) {
+      return firstItem;
     }
   }
-
-  return commonItem;
 }
 
 /**
@@ -38,6 +30,9 @@ function mapItemToPriority(item) {
   } else if (charCode >= A && charCode <= Z) {
     return charCode - A + 27;
   }
+
+  // This case should never happen
+  return 0;
 }
 
 /**
