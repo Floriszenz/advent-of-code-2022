@@ -2,6 +2,23 @@ import { open } from "node:fs/promises";
 import { argv } from "node:process";
 
 /**
+ * @param {import("node:fs/promises").FileHandle} rucksackList
+ */
+async function* readGroupsOfRucksacks(rucksackList) {
+  /** @type {[string, string, string]} */
+  const group = [];
+
+  for await (const rucksack of rucksackList.readLines()) {
+    group.push(rucksack);
+
+    if (group.length === 3) {
+      yield group;
+      group.splice(0, 3);
+    }
+  }
+}
+
+/**
  * @param {string} rucksack
  */
 function findCommonItemInRucksack(rucksack) {
@@ -10,6 +27,20 @@ function findCommonItemInRucksack(rucksack) {
 
   for (const firstItem of firstCompartment) {
     if (secondCompartment.includes(firstItem)) {
+      return firstItem;
+    }
+  }
+}
+
+/**
+ * @param {[string, string, string]} groupOfRucksack
+ */
+function findBadgeItemForGroup([firstRucksack, secondRucksack, thirdRucksack]) {
+  for (const firstItem of firstRucksack) {
+    if (
+      secondRucksack.includes(firstItem) &&
+      thirdRucksack.includes(firstItem)
+    ) {
       return firstItem;
     }
   }
@@ -59,9 +90,33 @@ async function calculateSumOfIndividualPriorities(filePath) {
   return sumOfPriorities;
 }
 
+/**
+ * @param {string} filePath
+ */
+async function calculateSumOfGroupPriorities(filePath) {
+  const rucksackList = await open(filePath);
+  let sumOfPriorities = 0;
+
+  for await (const group of readGroupsOfRucksacks(rucksackList)) {
+    const badgeItem = findBadgeItemForGroup(group);
+
+    if (!badgeItem) {
+      throw new Error(`Couldn't find any badge item in group "${group}"`);
+    }
+
+    sumOfPriorities += mapItemToPriority(badgeItem);
+  }
+
+  await rucksackList.close();
+
+  return sumOfPriorities;
+}
+
 const filePath = argv.at(2);
 
 let sumOfIndividualPriorities =
   await calculateSumOfIndividualPriorities(filePath);
+let sumOfGroupPriorities = await calculateSumOfGroupPriorities(filePath);
 
 console.log(`Sum of individual priorities: ${sumOfIndividualPriorities}`);
+console.log(`Sum of group priorities: ${sumOfGroupPriorities}`);
