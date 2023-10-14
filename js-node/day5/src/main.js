@@ -2,64 +2,122 @@ import { open } from "node:fs/promises";
 import { argv } from "node:process";
 
 const filePath = argv.at(2);
-const input = await open(filePath);
 
-const stackInput = [];
-let processInstructions = false;
+let stacksDescriptor = [];
+let isBuildingStacksDone = false;
 /** @type {Record<string, string[]>} */
-const stackPlace = {};
+let containerTerminal = {};
 
-for await (const line of input.readLines()) {
-  if (line.trim() === "") {
-    processInstructions = true;
+function resetGlobalState() {
+  stacksDescriptor = [];
+  isBuildingStacksDone = false;
+  containerTerminal = {};
+}
 
-    // Add stack ids to stack place
-    const stackIds = stackInput.pop().trim().split("   ");
+function initializeStacks() {
+  const stackIds = stacksDescriptor.pop().trim().split("   ");
 
-    for (const id of stackIds) {
-      stackPlace[id] = [];
-    }
+  for (const id of stackIds) {
+    containerTerminal[id] = [];
+  }
+}
 
-    // Add crates to stacks
-    for (const procedure of stackInput.reverse()) {
-      for (let index = 1; index <= Object.keys(stackPlace).length; index++) {
-        const crate = procedure[4 * (index - 1) + 1];
+function moveCratesToInitialStackPosition() {
+  for (const layerOfCargo of stacksDescriptor.reverse()) {
+    for (
+      let index = 1;
+      index <= Object.keys(containerTerminal).length;
+      index++
+    ) {
+      const crate = layerOfCargo[4 * (index - 1) + 1];
 
-        if (crate != " ") {
-          stackPlace[`${index}`].push(crate);
-        }
+      if (crate != " ") {
+        containerTerminal[`${index}`].push(crate);
       }
     }
+  }
+}
 
-    continue;
+function buildInitialStacks() {
+  initializeStacks();
+  moveCratesToInitialStackPosition();
+  isBuildingStacksDone = true;
+}
+
+/** @typedef {{amount: number; from: string; to: string}} RearrangementProcedure */
+
+/**
+ * @param {string} procedure
+ * @returns {RearrangementProcedure}
+ */
+function parseRearrangementProcedure(procedure) {
+  const { amount, from, to } =
+    /^move (?<amount>\d+) from (?<from>\d+) to (?<to>\d+)$/.exec(
+      procedure,
+    ).groups;
+
+  return {
+    amount: Number(amount),
+    from,
+    to,
+  };
+}
+
+/**
+ * @param {RearrangementProcedure} procedure
+ */
+function rearrangeWithCrateMover9000({ amount, from, to }) {
+  for (let index = 0; index < amount; index++) {
+    const crateToMove = containerTerminal[from].pop();
+
+    containerTerminal[to].push(crateToMove);
+  }
+}
+
+function getCratesOnTopOfEachStack() {
+  let output = "";
+
+  for (let index = 1; index <= Object.keys(containerTerminal).length; index++) {
+    const topCrateOfStack = containerTerminal[`${index}`].at(-1);
+
+    output += topCrateOfStack;
   }
 
-  if (processInstructions) {
-    // Parse info from procedure
-    const { crateCount, from, to } =
-      /^move (?<crateCount>\d+) from (?<from>\d+) to (?<to>\d+)$/.exec(
-        line,
-      ).groups;
+  return output;
+}
 
-    for (let index = 0; index < Number(crateCount); index++) {
-      const crateToMove = stackPlace[from].pop();
+/**
+ * @param {(RearrangementProcedure) => void} rearrangementStrategy
+ */
+async function runRearrangementSimulation(rearrangementStrategy) {
+  resetGlobalState();
 
-      stackPlace[to].push(crateToMove);
+  const input = await open(filePath);
+
+  for await (const line of input.readLines()) {
+    if (line.trim() === "") {
+      buildInitialStacks();
+      continue;
     }
-  } else {
-    stackInput.push(line);
+
+    if (isBuildingStacksDone) {
+      const procedure = parseRearrangementProcedure(line);
+
+      rearrangementStrategy(procedure);
+    } else {
+      stacksDescriptor.push(line);
+    }
   }
+
+  await input.close();
+
+  return getCratesOnTopOfEachStack();
 }
 
-await input.close();
+const cratesOnTopWithCrateMover9000 = await runRearrangementSimulation(
+  rearrangeWithCrateMover9000,
+);
 
-// Output highest crate on each stack
-let output = "";
-
-for (let index = 1; index <= Object.keys(stackPlace).length; index++) {
-  const highestCrateOfStack = stackPlace[`${index}`].at(-1);
-
-  output += highestCrateOfStack;
-}
-
-console.log(`Crates on top of each stack after rearrangement: "${output}"`);
+console.log(
+  `Crates on top of each stack after rearrangement: "${cratesOnTopWithCrateMover9000}"`,
+);
