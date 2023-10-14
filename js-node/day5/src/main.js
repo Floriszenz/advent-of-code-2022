@@ -74,6 +74,18 @@ function rearrangeWithCrateMover9000({ amount, from, to }) {
   }
 }
 
+/**
+ * @param {RearrangementProcedure} procedure
+ */
+function rearrangeWithCrateMover9001({ amount, from, to }) {
+  const cratesToMove = containerTerminal[from].splice(
+    containerTerminal[from].length - amount,
+    amount,
+  );
+
+  containerTerminal[to].push(...cratesToMove);
+}
+
 function getCratesOnTopOfEachStack() {
   let output = "";
 
@@ -117,7 +129,13 @@ async function runRearrangementSimulation(rearrangementStrategy) {
 const cratesOnTopWithCrateMover9000 = await runRearrangementSimulation(
   rearrangeWithCrateMover9000,
 );
+const cratesOnTopWithCrateMover9001 = await runRearrangementSimulation(
+  rearrangeWithCrateMover9001,
+);
 
 console.log(
-  `Crates on top of each stack after rearrangement: "${cratesOnTopWithCrateMover9000}"`,
+  `Crates on top of each stack after rearrangement with CrateMover9000: "${cratesOnTopWithCrateMover9000}"`,
+);
+console.log(
+  `Crates on top of each stack after rearrangement with CrateMover9001: "${cratesOnTopWithCrateMover9001}"`,
 );
