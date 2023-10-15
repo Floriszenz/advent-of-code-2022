@@ -1,9 +1,0 @@
-{
-  "name": "advent-of-code-2022-day-2",
-  "version": "0.1.0",
-  "type": "module",
-  "scripts": {
-    "main": "node src/main.js ../../data/day2-input.txt",
-    "test": "node src/main.js ../../data/day2-example.txt"
-  }
-}
