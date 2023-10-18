@@ -57,7 +57,7 @@ export class Monkey {
         return this.worryLevelsForItems.length > 0;
     }
 
-    inspectItem() {
+    inspectItem(reliefReducesWorry = true) {
         let newWorryLevel = this.worryLevelsForItems[0];
 
         globalThis.DEBUG &&
@@ -67,12 +67,14 @@ export class Monkey {
 
         globalThis.DEBUG && console.log(`\t\tWorry level grows to ${newWorryLevel}.`);
 
-        newWorryLevel = Math.floor(newWorryLevel / 3);
+        if (reliefReducesWorry) {
+            newWorryLevel = Math.floor(newWorryLevel / 3);
 
-        globalThis.DEBUG &&
-            console.log(
-                `\t\tMonkey gets bored with item. Worry level is divided by 3 to ${newWorryLevel}.`
-            );
+            globalThis.DEBUG &&
+                console.log(
+                    `\t\tMonkey gets bored with item. Worry level is divided by 3 to ${newWorryLevel}.`
+                );
+        }
 
         this.worryLevelsForItems[0] = newWorryLevel;
         this.numberOfInspections++;
@@ -97,8 +99,9 @@ export class Monkey {
         return this.throwRecipientB;
     }
 
-    throwItemToMonkey() {
-        const item = this.worryLevelsForItems.shift();
+    /** @param {number} worryLevelLimit  */
+    throwItemToMonkey(worryLevelLimit) {
+        const item = this.worryLevelsForItems.shift() % worryLevelLimit;
         const recipient = this.determineThrowRecipient(item);
 
         globalThis.DEBUG &&
