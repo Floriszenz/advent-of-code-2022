@@ -2,38 +2,38 @@ import { open } from "node:fs/promises";
 import { argv } from "node:process";
 
 const OpponentsChoice = {
-  Rock: "A",
-  Paper: "B",
-  Scissors: "C",
+    Rock: "A",
+    Paper: "B",
+    Scissors: "C",
 };
 const MyChoice = {
-  Rock: "X",
-  Paper: "Y",
-  Scissors: "Z",
+    Rock: "X",
+    Paper: "Y",
+    Scissors: "Z",
 };
 const OutcomeOfRound = {
-  Lose: "X",
-  Draw: "Y",
-  Win: "Z",
+    Lose: "X",
+    Draw: "Y",
+    Win: "Z",
 };
 
 /**
  * @param {MyChoice[keyof typeof MyChoice]} shape
  */
 function getScoreForShape(shape) {
-  switch (shape) {
-    case MyChoice.Rock:
-      return 1;
+    switch (shape) {
+        case MyChoice.Rock:
+            return 1;
 
-    case MyChoice.Paper:
-      return 2;
+        case MyChoice.Paper:
+            return 2;
 
-    case MyChoice.Scissors:
-      return 3;
+        case MyChoice.Scissors:
+            return 3;
 
-    default:
-      throw new Error(`You have chosen an invalid shape: ${shape}`);
-  }
+        default:
+            throw new Error(`You have chosen an invalid shape: ${shape}`);
+    }
 }
 
 /**
@@ -41,29 +41,25 @@ function getScoreForShape(shape) {
  * @param {OpponentsChoice[keyof typeof OpponentsChoice]} opponentsChoice
  */
 function determineOutcomeOfRound(myChoice, opponentsChoice) {
-  const iAmWinning =
-    (myChoice === MyChoice.Rock &&
-      opponentsChoice === OpponentsChoice.Scissors) ||
-    (myChoice === MyChoice.Paper && opponentsChoice === OpponentsChoice.Rock) ||
-    (myChoice === MyChoice.Scissors &&
-      opponentsChoice === OpponentsChoice.Paper);
+    const iAmWinning =
+        (myChoice === MyChoice.Rock && opponentsChoice === OpponentsChoice.Scissors) ||
+        (myChoice === MyChoice.Paper && opponentsChoice === OpponentsChoice.Rock) ||
+        (myChoice === MyChoice.Scissors && opponentsChoice === OpponentsChoice.Paper);
 
-  if (iAmWinning) {
-    return OutcomeOfRound.Win;
-  }
+    if (iAmWinning) {
+        return OutcomeOfRound.Win;
+    }
 
-  const itIsDraw =
-    (myChoice === MyChoice.Rock && opponentsChoice === OpponentsChoice.Rock) ||
-    (myChoice === MyChoice.Paper &&
-      opponentsChoice === OpponentsChoice.Paper) ||
-    (myChoice === MyChoice.Scissors &&
-      opponentsChoice === OpponentsChoice.Scissors);
+    const itIsDraw =
+        (myChoice === MyChoice.Rock && opponentsChoice === OpponentsChoice.Rock) ||
+        (myChoice === MyChoice.Paper && opponentsChoice === OpponentsChoice.Paper) ||
+        (myChoice === MyChoice.Scissors && opponentsChoice === OpponentsChoice.Scissors);
 
-  if (itIsDraw) {
-    return OutcomeOfRound.Draw;
-  }
+    if (itIsDraw) {
+        return OutcomeOfRound.Draw;
+    }
 
-  return OutcomeOfRound.Lose;
+    return OutcomeOfRound.Lose;
 }
 
 /**
@@ -71,94 +67,91 @@ function determineOutcomeOfRound(myChoice, opponentsChoice) {
  * @param {OpponentsChoice[keyof typeof OpponentsChoice]} opponentsChoice
  */
 function determineChoiceForDesiredOutcome(desiredOutcome, opponentsChoice) {
-  if (desiredOutcome === OutcomeOfRound.Win) {
-    switch (opponentsChoice) {
-      case OpponentsChoice.Rock:
-        return MyChoice.Paper;
+    if (desiredOutcome === OutcomeOfRound.Win) {
+        switch (opponentsChoice) {
+            case OpponentsChoice.Rock:
+                return MyChoice.Paper;
 
-      case OpponentsChoice.Paper:
-        return MyChoice.Scissors;
+            case OpponentsChoice.Paper:
+                return MyChoice.Scissors;
 
-      case OpponentsChoice.Scissors:
-        return MyChoice.Rock;
+            case OpponentsChoice.Scissors:
+                return MyChoice.Rock;
+        }
+    } else if (desiredOutcome === OutcomeOfRound.Draw) {
+        switch (opponentsChoice) {
+            case OpponentsChoice.Rock:
+                return MyChoice.Rock;
+
+            case OpponentsChoice.Paper:
+                return MyChoice.Paper;
+
+            case OpponentsChoice.Scissors:
+                return MyChoice.Scissors;
+        }
+    } else if (desiredOutcome === OutcomeOfRound.Lose) {
+        switch (opponentsChoice) {
+            case OpponentsChoice.Rock:
+                return MyChoice.Scissors;
+
+            case OpponentsChoice.Paper:
+                return MyChoice.Rock;
+
+            case OpponentsChoice.Scissors:
+                return MyChoice.Paper;
+        }
     }
-  } else if (desiredOutcome === OutcomeOfRound.Draw) {
-    switch (opponentsChoice) {
-      case OpponentsChoice.Rock:
-        return MyChoice.Rock;
-
-      case OpponentsChoice.Paper:
-        return MyChoice.Paper;
-
-      case OpponentsChoice.Scissors:
-        return MyChoice.Scissors;
-    }
-  } else if (desiredOutcome === OutcomeOfRound.Lose) {
-    switch (opponentsChoice) {
-      case OpponentsChoice.Rock:
-        return MyChoice.Scissors;
-
-      case OpponentsChoice.Paper:
-        return MyChoice.Rock;
-
-      case OpponentsChoice.Scissors:
-        return MyChoice.Paper;
-    }
-  }
 }
 
 /**
  * @param {string} filePath
  */
 async function calculateAssumedTotalScore(filePath) {
-  const strategyGuide = await open(filePath);
-  let totalScore = 0;
+    const strategyGuide = await open(filePath);
+    let totalScore = 0;
 
-  for await (const line of strategyGuide.readLines({ start: 0 })) {
-    const [opponentsChoice, myChoice] = line.split(" ");
+    for await (const line of strategyGuide.readLines({ start: 0 })) {
+        const [opponentsChoice, myChoice] = line.split(" ");
 
-    totalScore += getScoreForShape(myChoice);
+        totalScore += getScoreForShape(myChoice);
 
-    const outcomeOfRound = determineOutcomeOfRound(myChoice, opponentsChoice);
+        const outcomeOfRound = determineOutcomeOfRound(myChoice, opponentsChoice);
 
-    if (outcomeOfRound === OutcomeOfRound.Win) {
-      totalScore += 6;
-    } else if (outcomeOfRound === OutcomeOfRound.Draw) {
-      totalScore += 3;
+        if (outcomeOfRound === OutcomeOfRound.Win) {
+            totalScore += 6;
+        } else if (outcomeOfRound === OutcomeOfRound.Draw) {
+            totalScore += 3;
+        }
     }
-  }
 
-  await strategyGuide.close();
+    await strategyGuide.close();
 
-  return totalScore;
+    return totalScore;
 }
 
 /**
  * @param {string} filePath
  */
 async function calculateActualTotalScore(filePath) {
-  const strategyGuide = await open(filePath);
-  let totalScore = 0;
+    const strategyGuide = await open(filePath);
+    let totalScore = 0;
 
-  for await (const line of strategyGuide.readLines({ start: 0 })) {
-    const [opponentsChoice, desiredOutcome] = line.split(" ");
-    const myChoice = determineChoiceForDesiredOutcome(
-      desiredOutcome,
-      opponentsChoice,
-    );
+    for await (const line of strategyGuide.readLines({ start: 0 })) {
+        const [opponentsChoice, desiredOutcome] = line.split(" ");
+        const myChoice = determineChoiceForDesiredOutcome(desiredOutcome, opponentsChoice);
 
-    totalScore += getScoreForShape(myChoice);
+        totalScore += getScoreForShape(myChoice);
 
-    if (desiredOutcome === OutcomeOfRound.Win) {
-      totalScore += 6;
-    } else if (desiredOutcome === OutcomeOfRound.Draw) {
-      totalScore += 3;
+        if (desiredOutcome === OutcomeOfRound.Win) {
+            totalScore += 6;
+        } else if (desiredOutcome === OutcomeOfRound.Draw) {
+            totalScore += 3;
+        }
     }
-  }
 
-  await strategyGuide.close();
+    await strategyGuide.close();
 
-  return totalScore;
+    return totalScore;
 }
 
 const filePath = argv.at(2);
