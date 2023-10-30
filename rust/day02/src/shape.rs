@@ -1,3 +1,5 @@
+use crate::outcome_of_round::OutcomeOfRound;
+
 pub enum Shape {
     Rock,
     Paper,
@@ -20,6 +22,21 @@ impl Shape {
             "Y" => Self::Paper,
             "Z" => Self::Scissors,
             _ => unreachable!(),
+        }
+    }
+
+    pub fn new_from_outcome_and_opponents_choice(
+        outcome: &OutcomeOfRound,
+        opponents_choice: &Shape,
+    ) -> Self {
+        match (outcome, opponents_choice) {
+            (OutcomeOfRound::Win, Shape::Scissors)
+            | (OutcomeOfRound::Draw, Shape::Rock)
+            | (OutcomeOfRound::Lose, Shape::Paper) => Self::Rock,
+            (OutcomeOfRound::Win, Shape::Rock)
+            | (OutcomeOfRound::Draw, Shape::Paper)
+            | (OutcomeOfRound::Lose, Shape::Scissors) => Self::Paper,
+            _ => Self::Scissors,
         }
     }
 

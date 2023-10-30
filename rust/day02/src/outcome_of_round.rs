@@ -7,7 +7,7 @@ pub enum OutcomeOfRound {
 }
 
 impl OutcomeOfRound {
-    pub fn new(my_choice: Shape, opponents_choice: Shape) -> Self {
+    pub fn new(my_choice: &Shape, opponents_choice: &Shape) -> Self {
         match (my_choice, opponents_choice) {
             (Shape::Rock, Shape::Scissors)
             | (Shape::Paper, Shape::Rock)
@@ -16,6 +16,15 @@ impl OutcomeOfRound {
             | (Shape::Paper, Shape::Paper)
             | (Shape::Scissors, Shape::Scissors) => Self::Draw,
             _ => Self::Lose,
+        }
+    }
+
+    pub fn new_from_guide(value: &str) -> Self {
+        match value {
+            "X" => Self::Lose,
+            "Y" => Self::Draw,
+            "Z" => Self::Win,
+            _ => unreachable!(),
         }
     }
 
