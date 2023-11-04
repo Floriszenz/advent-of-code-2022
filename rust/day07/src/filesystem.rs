@@ -42,6 +42,10 @@ impl Filesystem {
         }
     }
 
+    pub fn size(&self) -> u32 {
+        self.root.size()
+    }
+
     pub fn fold<A, F>(&self, init: A, f: &mut F) -> A
     where
         F: FnMut(&mut A, &Rc<FilesystemEntry>) -> A,
