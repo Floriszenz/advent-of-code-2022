@@ -2,7 +2,6 @@ use std::{io::BufRead, rc::Rc};
 
 use crate::filesystem_entry::FilesystemEntry;
 
-#[derive(Debug)]
 pub struct Filesystem {
     root: Rc<FilesystemEntry>,
     current_working_directory: Rc<FilesystemEntry>,
@@ -42,30 +41,12 @@ impl Filesystem {
         }
     }
 
-    pub fn size(&self) -> u32 {
-        self.root.size()
+    pub fn root(&self) -> &Rc<FilesystemEntry> {
+        &self.root
     }
 
-    pub fn fold<A, F>(&self, init: A, f: &mut F) -> A
-    where
-        F: FnMut(&mut A, &Rc<FilesystemEntry>) -> A,
-    {
-        let mut accumulator = init;
-
-        fn traverse<A, F>(accumulator: &mut A, f: &mut F, entry: &Rc<FilesystemEntry>)
-        where
-            F: FnMut(&mut A, &Rc<FilesystemEntry>) -> A,
-        {
-            *accumulator = f(accumulator, entry);
-
-            if let Some(directories) = entry.directories() {
-                directories.for_each(|dir| traverse(accumulator, f, &dir));
-            }
-        }
-
-        traverse(&mut accumulator, f, &self.root);
-
-        accumulator
+    pub fn size(&self) -> u32 {
+        self.root.size()
     }
 
     fn change_directory(&mut self, directory: &str) {

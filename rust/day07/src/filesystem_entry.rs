@@ -1,6 +1,5 @@
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-#[derive(Debug)]
 pub enum FilesystemEntry {
     Directory {
         entries: RefCell<HashMap<String, Rc<Self>>>,
@@ -38,16 +37,9 @@ impl FilesystemEntry {
         }
     }
 
-    pub fn directories(&self) -> Option<impl Iterator<Item = Rc<Self>> + '_> {
+    pub fn children(&self) -> Option<Vec<Rc<Self>>> {
         if let Self::Directory { entries, .. } = self {
-            let directories = entries
-                .borrow()
-                .values()
-                .filter(|entry| entry.is_directory())
-                .map(Rc::clone)
-                .collect::<Vec<_>>();
-
-            Some(directories.into_iter())
+            Some(entries.borrow().values().map(Rc::clone).collect::<Vec<_>>())
         } else {
             None
         }
