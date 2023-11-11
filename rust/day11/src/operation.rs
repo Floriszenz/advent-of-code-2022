@@ -17,7 +17,7 @@ impl Operator {
 #[derive(Debug)]
 enum Operand {
     OldValue,
-    Number(u32),
+    Number(u64),
 }
 
 impl Operand {
@@ -50,7 +50,7 @@ impl Operation {
         }
     }
 
-    pub fn execute(&self, old_value: u32) -> u32 {
+    pub fn execute(&self, old_value: u64) -> u64 {
         let operand_a = if let Operand::Number(number) = self.operand_a {
             number
         } else {

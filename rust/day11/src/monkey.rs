@@ -3,15 +3,15 @@ use std::collections::VecDeque;
 use crate::operation::Operation;
 
 pub struct ThrowData {
-    pub item: u32,
+    pub item: u64,
     pub recipient: usize,
 }
 
 #[derive(Debug)]
 pub struct Monkey {
-    worry_levels_for_items: VecDeque<u32>,
+    worry_levels_for_items: VecDeque<u64>,
     reaction_to_inspection: Operation,
-    throw_recipient_determinator: u32,
+    throw_recipient_determinator: u64,
     throw_recipient_a: usize,
     throw_recipient_b: usize,
     number_of_inspections: u32,
@@ -28,7 +28,7 @@ impl Monkey {
                     .strip_prefix("Starting items: ")
                     .unwrap()
                     .split(", ")
-                    .map(|item| item.parse::<u32>().ok())
+                    .map(|item| item.parse::<u64>().ok())
                     .collect::<Option<VecDeque<_>>>()
             })
             .unwrap();
@@ -47,7 +47,7 @@ impl Monkey {
             .and_then(|line| {
                 line.trim()
                     .strip_prefix("Test: divisible by ")
-                    .and_then(|det| det.parse::<u32>().ok())
+                    .and_then(|det| det.parse::<u64>().ok())
             })
             .unwrap();
 
@@ -83,28 +83,31 @@ impl Monkey {
         !self.worry_levels_for_items.is_empty()
     }
 
-    pub fn inspect_item(&mut self) {
+    pub fn inspect_item(&mut self, relief_reduces_worry: bool) {
         if let Some(current_worry_level) = self.worry_levels_for_items.get_mut(0) {
             #[cfg(feature = "debug")]
             println!("  Monkey inspects an item with a worry level of {current_worry_level}.");
 
-            let new_worry_level = self.reaction_to_inspection.execute(*current_worry_level);
+            let mut new_worry_level = self.reaction_to_inspection.execute(*current_worry_level);
 
             #[cfg(feature = "debug")]
             println!("    Worry level grows to {new_worry_level}.");
 
-            let new_worry_level = new_worry_level / 3;
+            if relief_reduces_worry {
+                new_worry_level /= 3;
 
-            #[cfg(feature = "debug")]
-            println!("    Monkey gets bored with item. Worry level is divided by 3 to {new_worry_level}.");
+                #[cfg(feature = "debug")]
+                println!("    Monkey gets bored with item. Worry level is divided by 3 to {new_worry_level}.");
+            }
 
             *current_worry_level = new_worry_level;
             self.number_of_inspections += 1;
         }
     }
 
-    pub fn throw_item_to_monkey(&mut self) -> Option<ThrowData> {
+    pub fn throw_item_to_monkey(&mut self, worry_level_limit: u64) -> Option<ThrowData> {
         self.worry_levels_for_items.pop_front().map(|item| {
+            let item = item % worry_level_limit;
             let recipient = if item % self.throw_recipient_determinator == 0 {
                 #[cfg(feature = "debug")]
                 println!(
@@ -128,11 +131,15 @@ impl Monkey {
         })
     }
 
-    pub fn catch_item(&mut self, item: u32) {
+    pub fn catch_item(&mut self, item: u64) {
         self.worry_levels_for_items.push_back(item);
     }
 
     pub fn inspection_count(&self) -> u32 {
         self.number_of_inspections
+    }
+
+    pub fn throw_recipient_determinator(&self) -> u64 {
+        self.throw_recipient_determinator
     }
 }

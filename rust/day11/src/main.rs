@@ -5,7 +5,8 @@ use std::{collections::VecDeque, env, fs};
 
 use crate::monkey::{Monkey, ThrowData};
 
-const NUMBER_OF_ROUNDS: u32 = 20;
+const NUMBER_OF_ROUNDS: u32 = 10_000;
+const RELIEF_REDUCES_WORRY: bool = false;
 
 fn main() {
     if let Some(file_path) = env::args().nth(1) {
@@ -14,6 +15,10 @@ fn main() {
         let monkey_descriptors = monkey_descriptors.split("\n\n");
         let mut monkeys = monkey_descriptors.map(Monkey::new).collect::<Vec<Monkey>>();
         let mut thrown_items: VecDeque<ThrowData> = VecDeque::new();
+        let worry_level_limit = monkeys
+            .iter()
+            .map(|monkey| monkey.throw_recipient_determinator())
+            .product();
 
         for _ in 0..NUMBER_OF_ROUNDS {
             for idx in 0..monkeys.len() {
@@ -27,8 +32,8 @@ fn main() {
 
                 // Throw phase
                 while monkey.has_items_left() {
-                    monkey.inspect_item();
-                    thrown_items.push_back(monkey.throw_item_to_monkey().unwrap());
+                    monkey.inspect_item(RELIEF_REDUCES_WORRY);
+                    thrown_items.push_back(monkey.throw_item_to_monkey(worry_level_limit).unwrap());
                 }
 
                 // Catch phase
@@ -44,11 +49,11 @@ fn main() {
 
         monkeys.sort_unstable_by_key(|monkey| monkey.inspection_count());
 
-        let monkey_business_level: u32 = monkeys
+        let monkey_business_level: u64 = monkeys
             .split_at(monkeys.len() - 2)
             .1
             .iter()
-            .map(|monkey| monkey.inspection_count())
+            .map(|monkey| monkey.inspection_count() as u64)
             .product();
 
         println!("Level of monkey business after {NUMBER_OF_ROUNDS} rounds of stuff-slinging simian shenanigans is: {monkey_business_level}");
