@@ -5,30 +5,10 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"unicode/utf8"
+
+	"github.com/Floriszenz/advent-of-code-2022/go/day02/shape"
 )
-
-func getOutcomeOfRound(myChoice rune, opponentsChoice rune) int {
-    if myChoice == 'X' && opponentsChoice == 'C' || myChoice == 'Y' && opponentsChoice == 'A' || myChoice == 'Z' && opponentsChoice == 'B' {
-        return 6
-    } else if myChoice == 'X' && opponentsChoice == 'A' || myChoice == 'Y' && opponentsChoice == 'B' || myChoice == 'Z' && opponentsChoice == 'C' {
-        return 3
-    } else {
-        return 0
-    }
-}
-
-func getScoreForShape(choice rune) int {
-    switch choice {
-        case 'X':
-            return 1
-        case 'Y':
-            return 2
-        case 'Z':
-            return 3
-    }
-
-    return 0
-}
 
 func main() {
     if len(os.Args) != 2 {
@@ -50,11 +30,15 @@ func main() {
     for scanner.Scan() {
         line := scanner.Text()
         columns := strings.Split(line, " ")
-        opponentsChoice, myChoice := columns[0], columns[1]
-        outcomeOfRound := getOutcomeOfRound(rune(myChoice[0]), rune(opponentsChoice[0]))
-        score := getScoreForShape(rune(myChoice[0]))
 
-        assumedTotalScore += outcomeOfRound + score
+        opponentsChoice, _ := utf8.DecodeRuneInString(columns[0])
+        opponentsShape := shape.NewShapeFromGuide(opponentsChoice)
+        myChoice, _ := utf8.DecodeRuneInString(columns[1])
+        myShape := shape.NewShapeFromGuide(myChoice)
+
+        outcomeOfRound := myShape.FightAgainst(opponentsShape)
+
+        assumedTotalScore += outcomeOfRound.GetScore() + myShape.GetScore()
     }
     
     fmt.Printf("Assumed total score for the game is: %v\n", assumedTotalScore)
