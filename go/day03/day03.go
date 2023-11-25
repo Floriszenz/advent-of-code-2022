@@ -17,20 +17,7 @@ func mapItemToPriority(item rune) int {
     return 0
 }
 
-func main() {
-    if len(os.Args) != 2 {
-        fmt.Println("You have to provide the path of the input file as argument.")
-        return
-    }
-
-    rucksackList, err := os.Open(os.Args[1])
-
-    if err != nil {
-        fmt.Println("Could not open rucksack list file.", err)
-        return
-    }
-    defer rucksackList.Close()
-
+func sumDuplicateItemInRucksackPriorities(rucksackList *os.File) int {
     scanner := bufio.NewScanner(rucksackList)
     sumOfPriorities := 0
 
@@ -45,6 +32,80 @@ func main() {
             }
         }
     }
-    
-    fmt.Printf("Sum of duplicate item priorities: %v\n", sumOfPriorities)
+
+    return sumOfPriorities
+}
+
+func sumDuplicateItemInGroupPriorities(rucksackList *os.File) int {
+    scanner := bufio.NewScanner(rucksackList)
+    sumOfPriorities := 0
+
+    splitOnTripleLine := func(data []byte, atEOF bool) (int, []byte, error) {
+        lineCount := 0
+
+        for i := 0; i < len(data); i++ {
+            if data[i] == '\n' {
+                lineCount++
+            }
+
+            if lineCount == 3 {
+                lineCount = 0
+                return i + 1, data[:i], nil
+            }
+        }
+
+        if !atEOF {
+            return 0, nil, nil
+        }
+
+        return 0, data, bufio.ErrFinalToken
+    }
+
+    scanner.Split(splitOnTripleLine)
+
+    for scanner.Scan() {
+        group := scanner.Text()
+
+        if len(group) > 0 {
+            rucksacks := strings.Split(group, "\n")
+            firstRucksack, secondRucksack, thirdRucksack := rucksacks[0], rucksacks[1], rucksacks[2]
+
+            for _, item := range firstRucksack {
+                if strings.ContainsRune(secondRucksack, item) && strings.ContainsRune(thirdRucksack, item) {
+                    sumOfPriorities += mapItemToPriority(item)
+                    break
+                }
+            }
+        }
+    }
+
+    return sumOfPriorities
+}
+
+func main() {
+    if len(os.Args) != 2 {
+        fmt.Println("You have to provide the path of the input file as argument.")
+        return
+    }
+
+    rucksackList, err := os.Open(os.Args[1])
+
+    if err != nil {
+        fmt.Println("Could not open rucksack list file.", err)
+        return
+    }
+    defer rucksackList.Close()
+
+    sumOfRucksackPriorities := sumDuplicateItemInRucksackPriorities(rucksackList)
+    fmt.Printf("Sum of duplicate item in rucksack priorities: %v\n", sumOfRucksackPriorities)
+
+    _, err = rucksackList.Seek(0, 0)
+
+    if err != nil {
+        fmt.Println("Could not rewind rucksack list file.", err)
+        return
+    }
+
+    sumOfGroupPriorities := sumDuplicateItemInGroupPriorities(rucksackList)
+    fmt.Printf("Sum of duplicate item in group priorities: %v\n", sumOfGroupPriorities)
 }
