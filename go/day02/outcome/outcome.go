@@ -8,15 +8,15 @@ type Outcome interface {
     GetScore() int
 }
 
-// func NewShapeFromGuide(r rune) Shape {
-//     switch r {
-//     case 'A', 'X':
-//         return &rock{}
-//     case 'B', 'Y':
-//         return &paper{}
-//     case 'C', 'Z':
-//         return &scissors{}
-//     }
-//
-//     return nil
-// }
+func NewFromGuide(r rune) Outcome {
+    switch r {
+    case 'X':
+        return &Lose{}
+    case 'Y':
+        return &Draw{}
+    case 'Z':
+        return &Win{}
+    }
+
+    return nil
+}

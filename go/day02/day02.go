@@ -7,6 +7,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/Floriszenz/advent-of-code-2022/go/day02/outcome"
 	"github.com/Floriszenz/advent-of-code-2022/go/day02/shape"
 )
 
@@ -26,21 +27,25 @@ func main() {
 
     scanner := bufio.NewScanner(strategyGuide)
     assumedTotalScore := 0
+    actualTotalScore := 0
 
     for scanner.Scan() {
         line := scanner.Text()
         columns := strings.Split(line, " ")
 
-        opponentsChoice, _ := utf8.DecodeRuneInString(columns[0])
-        opponentsShape := shape.NewShapeFromGuide(opponentsChoice)
-        myChoice, _ := utf8.DecodeRuneInString(columns[1])
-        myShape := shape.NewShapeFromGuide(myChoice)
+        firstColumn, _ := utf8.DecodeRuneInString(columns[0])
+        opponentsChoice := shape.NewShapeFromGuide(firstColumn)
+        secondColumn, _ := utf8.DecodeRuneInString(columns[1])
+        myChoice := shape.NewShapeFromGuide(secondColumn)
+        outcomeOfRound := myChoice.FightAgainst(opponentsChoice)
+        assumedTotalScore += outcomeOfRound.GetScore() + myChoice.GetScore()
 
-        outcomeOfRound := myShape.FightAgainst(opponentsShape)
-
-        assumedTotalScore += outcomeOfRound.GetScore() + myShape.GetScore()
+        outcomeOfRound = outcome.NewFromGuide(secondColumn)
+        myChoice = shape.InferFromOutcome(outcomeOfRound, opponentsChoice)
+        actualTotalScore += outcomeOfRound.GetScore() + myChoice.GetScore()
     }
     
     fmt.Printf("Assumed total score for the game is: %v\n", assumedTotalScore)
+    fmt.Printf("Actual total score for the game is: %v\n", actualTotalScore)
 
 }
